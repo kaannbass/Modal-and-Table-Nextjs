@@ -1,38 +1,67 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Head from "next/head";
-import ArrowDownOnSquareIcon from "@heroicons/react/24/solid/ArrowDownOnSquareIcon";
-import ArrowUpOnSquareIcon from "@heroicons/react/24/solid/ArrowUpOnSquareIcon";
-import PlusIcon from "@heroicons/react/24/solid/PlusIcon";
-import { Box, Button, Container, Stack, SvgIcon, Typography } from "@mui/material";
-import { CustomersTable } from "../sections/customer/customer-table";
+import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
+import {
+  Box,
+  Button,
+  Container,
+  Stack,
+  SvgIcon,
+  Typography,
+} from '@mui/material';
+import { CustomersTable } from '../Components/customer-table';
+import { User } from '@/interface/index'
+import { SearchBar } from '@/Components/SearchBar';
+import ModalComponent from '@/Components/Modal/Modal';
+import { URL } from '@/Config';
 
-export default function Home() {
+import { ToastContainer } from 'react-toastify';
+export default function Home(): React.ReactNode {
+
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<Boolean>(false)
-  const URL = 'https://64d0f4adff953154bb79c487.mockapi.io/api/v1/';
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
-  interface User {
-    createdAt: Date,
-    name: string,
-    id: number,
-    avatar: string
-  }
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+
 
   useEffect(() => {
-    axios.get(URL + 'users')
-      .then(res => {
-        setUsers(res.data)
+    axios.get<User[]>(URL + 'users')
+      .then((res) => {
+        console.log(res.data)
+        setUsers(res.data);
       })
-      .catch(error => console.error('Error fetching data:', error));
+      .catch((error) => console.error('Error fetching data:', error));
   }, []);
+
+  const handleSearch = (searchText: string) => {
+    const trimmedSearchText = searchText.trim();
+    if (trimmedSearchText === '') {
+      setFilteredUsers([]); // Clear filtered results
+    } else {
+      const filtered = users.filter(user =>
+        user.name.toLowerCase().includes(trimmedSearchText.toLowerCase()) ||
+        user.username.toLowerCase().includes(trimmedSearchText.toLowerCase()) ||
+        user.email.toLowerCase().includes(trimmedSearchText.toLowerCase()) ||
+        user.departments.toLowerCase().includes(trimmedSearchText.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    }
+  };
+
+
 
   return (
     <>
-      <Head>
-        <title>Customers | Devias Kit</title>
-      </Head>
+      <ToastContainer />
       <Box
         component="main"
         sx={{
@@ -40,36 +69,18 @@ export default function Home() {
           py: 8,
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth="xl" >
           <Stack spacing={3}>
             <Stack direction="row" justifyContent="space-between" spacing={4}>
               <Stack spacing={1}>
-                <Typography variant="h4">Customers</Typography>
+                <Typography variant="h4">All Users</Typography>
                 <Stack alignItems="center" direction="row" spacing={1}>
-                  <Button
-                    color="inherit"
-                    startIcon={
-                      <SvgIcon fontSize="small">
-                        <ArrowUpOnSquareIcon />
-                      </SvgIcon>
-                    }
-                  >
-                    Import
-                  </Button>
-                  <Button
-                    color="inherit"
-                    startIcon={
-                      <SvgIcon fontSize="small">
-                        <ArrowDownOnSquareIcon />
-                      </SvgIcon>
-                    }
-                  >
-                    Export
-                  </Button>
+                  <SearchBar onSearch={handleSearch} />
                 </Stack>
               </Stack>
-              <div>
+              <div className="">
                 <Button
+                  onClick={handleOpenModal}
                   startIcon={
                     <SvgIcon fontSize="small">
                       <PlusIcon />
@@ -77,15 +88,17 @@ export default function Home() {
                   }
                   variant="contained"
                 >
-                  Add
+                  Add New User
                 </Button>
+                <ModalComponent title='Add New User' open={modalOpen} onClose={handleCloseModal} />
               </div>
             </Stack>
 
-            {!users ? <h1>loading</h1> : <CustomersTable
-              count={users.length}
-              items={users}
-            />}
+            {filteredUsers.length > 0 ? (
+              <CustomersTable count={filteredUsers.length} items={filteredUsers} />
+            ) : (
+              <CustomersTable count={users.length} items={users} />
+            )}
 
 
           </Stack>
