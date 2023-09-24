@@ -1,3 +1,5 @@
+I have customized the data from your current project on the https://mockapi.io/projects website to suit my needs. You can also use it in your project.
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
